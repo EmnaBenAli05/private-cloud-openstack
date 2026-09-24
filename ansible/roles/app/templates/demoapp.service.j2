@@ -1,0 +1,12 @@
+[Unit]
+Description=Demo Flask App
+After=network.target
+
+[Service]
+ExecStart=/opt/demoapp/venv/bin/python3 /opt/demoapp/app.py
+WorkingDirectory=/opt/demoapp
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

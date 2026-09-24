@@ -1,0 +1,32 @@
+from flask import Flask, jsonify
+import pymysql
+
+app = Flask(__name__)
+
+def get_db_status():
+    try:
+        conn = pymysql.connect(
+            host="{{ hostvars['vm-bdd']['ansible_default_ipv4']['address'] | default('10.20.0.84') }}",
+            user="appuser",
+            password="AppUserPass123!",
+            database="testdb",
+            connect_timeout=3,
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT message FROM status_check ORDER BY id DESC LIMIT 1;")
+        row = cur.fetchone()
+        conn.close()
+        return row[0] if row else "table vide"
+    except Exception as e:
+        return f"erreur DB: {e}"
+
+@app.route("/")
+def index():
+    return jsonify({"tier": "app", "status": "OK"})
+
+@app.route("/health")
+def health():
+    return jsonify({"app": "OK", "db": get_db_status()})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

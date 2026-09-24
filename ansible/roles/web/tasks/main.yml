@@ -1,0 +1,31 @@
+---
+- name: Installer Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Déployer la config reverse proxy
+  template:
+    src: demoapp.conf.j2
+    dest: /etc/nginx/sites-available/demoapp
+  notify: restart nginx
+
+- name: Activer le site
+  file:
+    src: /etc/nginx/sites-available/demoapp
+    dest: /etc/nginx/sites-enabled/demoapp
+    state: link
+  notify: restart nginx
+
+- name: Désactiver le site par défaut
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: restart nginx
+
+- name: Démarrer et activer Nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: true

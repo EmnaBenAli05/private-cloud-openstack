@@ -1,0 +1,48 @@
+---
+- name: Installer MySQL
+  apt:
+    name: mysql-server
+    state: present
+    update_cache: true
+
+- name: Démarrer et activer MySQL
+  systemd:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: Installer pymysql (nécessaire au module mysql_*)
+  apt:
+    name: python3-pymysql
+    state: present
+
+- name: Créer la base testdb
+  mysql_db:
+    name: testdb
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+
+- name: Créer l'utilisateur applicatif
+  mysql_user:
+    name: appuser
+    password: "AppUserPass123!"
+    priv: "testdb.*:ALL"
+    host: "%"
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+
+- name: Autoriser les connexions distantes (bind-address)
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^bind-address'
+    line: 'bind-address = 0.0.0.0'
+  notify: restart mysql
+
+- name: Créer une table de démo
+  mysql_query:
+    login_db: testdb
+    login_unix_socket: /run/mysqld/mysqld.sock
+    query: >
+      CREATE TABLE IF NOT EXISTS status_check
+      (id INT AUTO_INCREMENT PRIMARY KEY, message VARCHAR(255), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      INSERT INTO status_check (message) VALUES ('DB opérationnelle');

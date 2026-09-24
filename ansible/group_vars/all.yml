@@ -1,0 +1,6 @@
+app_ip: "10.20.0.17"
+db_ip: "10.20.0.84"
+web_ip: "10.20.0.44"
+db_name: "appdb"
+db_user: "appuser"
+db_password: "ChangeMe123!"

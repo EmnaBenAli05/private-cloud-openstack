@@ -1,0 +1,51 @@
+---
+- hosts: app
+  become: true
+  tasks:
+    - name: Mettre à jour le cache apt
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Installer Python et venv
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Créer le dossier applicatif
+      file:
+        path: /opt/app
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Installer Flask/gunicorn/pymysql dans un virtualenv
+      pip:
+        name:
+          - flask
+          - gunicorn
+          - pymysql
+        virtualenv: /opt/app/venv
+        virtualenv_command: python3 -m venv
+
+    - name: Déployer app.py
+      template:
+        src: templates/app.py.j2
+        dest: /opt/app/app.py
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Déployer le service systemd
+      template:
+        src: templates/app.service.j2
+        dest: /etc/systemd/system/app.service
+
+    - name: Démarrer et activer l'application
+      systemd:
+        name: app
+        daemon_reload: yes
+        state: restarted
+        enabled: yes

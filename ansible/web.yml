@@ -1,0 +1,35 @@
+---
+- hosts: web
+  become: true
+  tasks:
+    - name: Mettre à jour le cache apt
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Installer Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Déployer la config reverse proxy
+      template:
+        src: templates/nginx-app.conf.j2
+        dest: /etc/nginx/sites-available/app
+
+    - name: Activer le site
+      file:
+        src: /etc/nginx/sites-available/app
+        dest: /etc/nginx/sites-enabled/app
+        state: link
+
+    - name: Retirer le site par défaut
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Redémarrer Nginx
+      service:
+        name: nginx
+        state: restarted
+        enabled: yes
